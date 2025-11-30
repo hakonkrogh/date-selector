@@ -1,5 +1,4 @@
 import { useState, useCallback, useMemo } from 'react'
-import './DateSelector.css'
 
 export interface DateSelectorProps {
   /** The currently selected date */
@@ -21,7 +20,6 @@ export interface DateSelectorProps {
 }
 
 const DAYS_IN_WEEK = 7
-const MONTHS_IN_YEAR = 12
 
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate()
@@ -78,9 +76,6 @@ export function DateSelector({
     const formatter = new Intl.DateTimeFormat(locale, { weekday: 'short' })
     for (let i = 0; i < DAYS_IN_WEEK; i++) {
       const dayIndex = (firstDayOfWeek + i) % DAYS_IN_WEEK
-      // Create a date that falls on the correct day of week
-      const date = new Date(2024, 0, dayIndex) // Jan 2024 starts on Monday
-      // Adjust to get correct day
       const adjustedDate = new Date(2024, 0, 7 + dayIndex)
       days.push(formatter.format(adjustedDate))
     }
@@ -94,17 +89,14 @@ export function DateSelector({
 
     const days: (Date | null)[] = []
 
-    // Add empty slots for days before the first of the month
     for (let i = 0; i < startOffset; i++) {
       days.push(null)
     }
 
-    // Add all days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(new Date(viewYear, viewMonth, day))
     }
 
-    // Pad to complete the last week
     while (days.length % DAYS_IN_WEEK !== 0) {
       days.push(null)
     }
@@ -146,17 +138,24 @@ export function DateSelector({
     [handleDateSelect]
   )
 
+  const navButtonClasses =
+    'flex h-8 w-8 items-center justify-center rounded border border-slate-200 bg-slate-50 text-sm text-slate-700 transition-colors hover:border-blue-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:border-blue-400 dark:hover:bg-slate-600'
+
+  const dayBaseClasses =
+    'flex aspect-square items-center justify-center rounded text-sm font-medium transition-colors'
+
   return (
     <div
-      className={`date-selector ${disabled ? 'date-selector--disabled' : ''} ${className}`}
+      className={`w-80 select-none rounded-lg border border-slate-200 bg-white p-4 font-sans dark:border-slate-600 dark:bg-slate-800 ${disabled ? 'pointer-events-none opacity-60' : ''} ${className}`}
       role="application"
       aria-label="Date selector"
     >
-      <div className="date-selector__header">
-        <div className="date-selector__nav">
+      {/* Header */}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex gap-1">
           <button
             type="button"
-            className="date-selector__nav-button"
+            className={navButtonClasses}
             onClick={goToPreviousYear}
             disabled={disabled}
             aria-label="Previous year"
@@ -165,7 +164,7 @@ export function DateSelector({
           </button>
           <button
             type="button"
-            className="date-selector__nav-button"
+            className={navButtonClasses}
             onClick={goToPreviousMonth}
             disabled={disabled}
             aria-label="Previous month"
@@ -174,15 +173,15 @@ export function DateSelector({
           </button>
         </div>
 
-        <div className="date-selector__title">
-          <span className="date-selector__month">{monthName}</span>
-          <span className="date-selector__year">{viewYear}</span>
+        <div className="flex gap-2 font-semibold">
+          <span className="text-slate-800 dark:text-slate-100">{monthName}</span>
+          <span className="text-slate-500 dark:text-slate-400">{viewYear}</span>
         </div>
 
-        <div className="date-selector__nav">
+        <div className="flex gap-1">
           <button
             type="button"
-            className="date-selector__nav-button"
+            className={navButtonClasses}
             onClick={goToNextMonth}
             disabled={disabled}
             aria-label="Next month"
@@ -191,7 +190,7 @@ export function DateSelector({
           </button>
           <button
             type="button"
-            className="date-selector__nav-button"
+            className={navButtonClasses}
             onClick={goToNextYear}
             disabled={disabled}
             aria-label="Next year"
@@ -201,12 +200,14 @@ export function DateSelector({
         </div>
       </div>
 
-      <div className="date-selector__calendar" role="grid">
-        <div className="date-selector__weekdays" role="row">
+      {/* Calendar */}
+      <div role="grid">
+        {/* Weekday headers */}
+        <div className="mb-2 grid grid-cols-7" role="row">
           {weekDays.map((day, index) => (
             <div
               key={index}
-              className="date-selector__weekday"
+              className="py-2 text-center text-xs font-semibold uppercase text-slate-500 dark:text-slate-400"
               role="columnheader"
             >
               {day}
@@ -214,13 +215,14 @@ export function DateSelector({
           ))}
         </div>
 
-        <div className="date-selector__days">
+        {/* Days grid */}
+        <div className="grid grid-cols-7 gap-0.5">
           {calendarDays.map((date, index) => {
             if (!date) {
               return (
                 <div
                   key={`empty-${index}`}
-                  className="date-selector__day date-selector__day--empty"
+                  className={`${dayBaseClasses}`}
                   role="gridcell"
                 />
               )
@@ -228,16 +230,27 @@ export function DateSelector({
 
             const isSelected = isSameDay(value, date)
             const isToday = isSameDay(today, date)
-            const isDisabled = isDateDisabled(date, minDate, maxDate)
+            const isDisabledDate = isDateDisabled(date, minDate, maxDate)
+
+            let dayClasses = dayBaseClasses
+            if (isSelected) {
+              dayClasses += ' bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500'
+            } else if (isToday) {
+              dayClasses += ' border-2 border-amber-500 bg-amber-50 text-slate-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-slate-100 dark:hover:bg-amber-900/50'
+            } else if (isDisabledDate) {
+              dayClasses += ' cursor-not-allowed text-slate-300 dark:text-slate-600'
+            } else {
+              dayClasses += ' text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700'
+            }
 
             return (
               <button
                 key={date.toISOString()}
                 type="button"
-                className={`date-selector__day ${isSelected ? 'date-selector__day--selected' : ''} ${isToday ? 'date-selector__day--today' : ''} ${isDisabled ? 'date-selector__day--disabled' : ''}`}
+                className={dayClasses}
                 onClick={() => handleDateSelect(date)}
                 onKeyDown={(e) => handleKeyDown(e, date)}
-                disabled={disabled || isDisabled}
+                disabled={disabled || isDisabledDate}
                 role="gridcell"
                 aria-selected={isSelected}
                 aria-label={date.toLocaleDateString(locale, {
@@ -255,9 +268,10 @@ export function DateSelector({
         </div>
       </div>
 
+      {/* Footer */}
       {value && (
-        <div className="date-selector__footer">
-          <span className="date-selector__selected-date">
+        <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4 dark:border-slate-600">
+          <span className="text-sm text-slate-700 dark:text-slate-200">
             Selected: {value.toLocaleDateString(locale, {
               weekday: 'short',
               year: 'numeric',
@@ -267,7 +281,7 @@ export function DateSelector({
           </span>
           <button
             type="button"
-            className="date-selector__clear-button"
+            className="rounded border border-slate-200 bg-transparent px-3 py-1.5 text-sm text-slate-500 transition-colors hover:border-blue-500 hover:bg-slate-100 hover:text-slate-700 dark:border-slate-600 dark:text-slate-400 dark:hover:border-blue-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
             onClick={() => onChange?.(null)}
             disabled={disabled}
           >

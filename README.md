@@ -10,8 +10,8 @@ A flexible and accessible React date selector component.
 - Locale-aware formatting for months and weekdays
 - Configurable first day of week
 - Optional min/max date constraints
-- Dark mode support
-- Zero external dependencies (only React as peer dependency)
+- Dark mode support (automatic via Tailwind)
+- Styled with Tailwind CSS
 - Fully typed with TypeScript
 
 ## Installation
@@ -54,27 +54,7 @@ function App() {
 
 ## Customization
 
-The component uses CSS custom properties for theming. Override these to customize the appearance:
-
-```css
-.date-selector {
-  --ds-primary: #3b82f6;
-  --ds-primary-hover: #2563eb;
-  --ds-background: #ffffff;
-  --ds-surface: #f8fafc;
-  --ds-border: #e2e8f0;
-  --ds-text: #1e293b;
-  --ds-text-muted: #64748b;
-  --ds-text-disabled: #cbd5e1;
-  --ds-today-bg: #fef3c7;
-  --ds-today-border: #f59e0b;
-  --ds-selected-bg: var(--ds-primary);
-  --ds-selected-text: #ffffff;
-  --ds-hover-bg: #f1f5f9;
-  --ds-radius: 8px;
-  --ds-radius-sm: 4px;
-}
-```
+The component uses Tailwind CSS classes. You can customize the appearance by passing a `className` prop or by extending Tailwind's theme in your project.
 
 ## Development
 
