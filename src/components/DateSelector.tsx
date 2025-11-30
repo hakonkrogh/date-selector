@@ -1,292 +1,310 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 
 export interface DateSelectorProps {
-  /** The currently selected date */
+  /** The start date for the timeline (required) */
+  startDate: Date
+  /** The end date for the timeline (defaults to today) */
+  endDate?: Date
+  /** The currently selected month */
   value?: Date | null
-  /** Callback when a date is selected */
+  /** Callback when a month is selected */
   onChange?: (date: Date | null) => void
-  /** Minimum selectable date */
-  minDate?: Date
-  /** Maximum selectable date */
-  maxDate?: Date
-  /** Disable the selector */
-  disabled?: boolean
+  /** Orientation of the timeline bar */
+  orientation?: 'horizontal' | 'vertical'
   /** Locale for formatting (default: 'en-US') */
   locale?: string
-  /** First day of week (0 = Sunday, 1 = Monday, etc.) */
-  firstDayOfWeek?: 0 | 1 | 2 | 3 | 4 | 5 | 6
   /** Custom class name */
   className?: string
 }
 
-const DAYS_IN_WEEK = 7
-
-function getDaysInMonth(year: number, month: number): number {
-  return new Date(year, month + 1, 0).getDate()
+interface MonthSelectorProps {
+  year: number
+  position: { x: number; y: number }
+  orientation: 'horizontal' | 'vertical'
+  locale: string
+  selectedMonth: number | null
+  onSelect: (month: number) => void
+  startDate: Date
+  endDate: Date
 }
 
-function getFirstDayOfMonth(year: number, month: number): number {
-  return new Date(year, month, 1).getDay()
-}
-
-function isSameDay(date1: Date | null | undefined, date2: Date): boolean {
-  if (!date1) return false
-  return (
-    date1.getFullYear() === date2.getFullYear() &&
-    date1.getMonth() === date2.getMonth() &&
-    date1.getDate() === date2.getDate()
-  )
-}
-
-function isDateDisabled(
-  date: Date,
-  minDate?: Date,
-  maxDate?: Date
-): boolean {
-  if (minDate && date < minDate) return true
-  if (maxDate && date > maxDate) return true
-  return false
-}
-
-export function DateSelector({
-  value,
-  onChange,
-  minDate,
-  maxDate,
-  disabled = false,
-  locale = 'en-US',
-  firstDayOfWeek = 0,
-  className = '',
-}: DateSelectorProps) {
-  const today = useMemo(() => new Date(), [])
-
-  const [viewDate, setViewDate] = useState(() => {
-    return value || today
-  })
-
-  const viewYear = viewDate.getFullYear()
-  const viewMonth = viewDate.getMonth()
-
-  const monthName = useMemo(() => {
-    return new Intl.DateTimeFormat(locale, { month: 'long' }).format(viewDate)
-  }, [viewDate, locale])
-
-  const weekDays = useMemo(() => {
-    const days: string[] = []
-    const formatter = new Intl.DateTimeFormat(locale, { weekday: 'short' })
-    for (let i = 0; i < DAYS_IN_WEEK; i++) {
-      const dayIndex = (firstDayOfWeek + i) % DAYS_IN_WEEK
-      const adjustedDate = new Date(2024, 0, 7 + dayIndex)
-      days.push(formatter.format(adjustedDate))
-    }
-    return days
-  }, [locale, firstDayOfWeek])
-
-  const calendarDays = useMemo(() => {
-    const daysInMonth = getDaysInMonth(viewYear, viewMonth)
-    const firstDay = getFirstDayOfMonth(viewYear, viewMonth)
-    const startOffset = (firstDay - firstDayOfWeek + DAYS_IN_WEEK) % DAYS_IN_WEEK
-
-    const days: (Date | null)[] = []
-
-    for (let i = 0; i < startOffset; i++) {
-      days.push(null)
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      days.push(new Date(viewYear, viewMonth, day))
-    }
-
-    while (days.length % DAYS_IN_WEEK !== 0) {
-      days.push(null)
-    }
-
-    return days
-  }, [viewYear, viewMonth, firstDayOfWeek])
-
-  const goToPreviousMonth = useCallback(() => {
-    setViewDate(new Date(viewYear, viewMonth - 1, 1))
-  }, [viewYear, viewMonth])
-
-  const goToNextMonth = useCallback(() => {
-    setViewDate(new Date(viewYear, viewMonth + 1, 1))
-  }, [viewYear, viewMonth])
-
-  const goToPreviousYear = useCallback(() => {
-    setViewDate(new Date(viewYear - 1, viewMonth, 1))
-  }, [viewYear, viewMonth])
-
-  const goToNextYear = useCallback(() => {
-    setViewDate(new Date(viewYear + 1, viewMonth, 1))
-  }, [viewYear, viewMonth])
-
-  const handleDateSelect = useCallback(
-    (date: Date) => {
-      if (disabled || isDateDisabled(date, minDate, maxDate)) return
-      onChange?.(date)
-    },
-    [disabled, minDate, maxDate, onChange]
-  )
-
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent, date: Date) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault()
-        handleDateSelect(date)
+function MonthSelector({
+  year,
+  position,
+  orientation,
+  locale,
+  selectedMonth,
+  onSelect,
+  startDate,
+  endDate,
+}: MonthSelectorProps) {
+  const months = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat(locale, { month: 'short' })
+    return Array.from({ length: 12 }, (_, i) => {
+      const date = new Date(year, i, 1)
+      return {
+        index: i,
+        name: formatter.format(date),
+        disabled:
+          date < new Date(startDate.getFullYear(), startDate.getMonth(), 1) ||
+          date > new Date(endDate.getFullYear(), endDate.getMonth(), 1),
       }
-    },
-    [handleDateSelect]
-  )
+    })
+  }, [year, locale, startDate, endDate])
 
-  const navButtonClasses =
-    'flex h-8 w-8 items-center justify-center rounded border border-slate-200 bg-slate-50 text-sm text-slate-700 transition-colors hover:border-blue-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:border-blue-400 dark:hover:bg-slate-600'
-
-  const dayBaseClasses =
-    'flex aspect-square items-center justify-center rounded text-sm font-medium transition-colors'
+  const style: React.CSSProperties =
+    orientation === 'horizontal'
+      ? {
+          position: 'absolute',
+          left: position.x,
+          bottom: '100%',
+          transform: 'translateX(-50%)',
+          marginBottom: 8,
+        }
+      : {
+          position: 'absolute',
+          top: position.y,
+          left: '100%',
+          transform: 'translateY(-50%)',
+          marginLeft: 8,
+        }
 
   return (
     <div
-      className={`w-80 select-none rounded-lg border border-slate-200 bg-white p-4 font-sans dark:border-slate-600 dark:bg-slate-800 ${disabled ? 'pointer-events-none opacity-60' : ''} ${className}`}
+      style={style}
+      className="z-50 rounded-lg border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-600 dark:bg-slate-800"
+    >
+      <div className="mb-2 text-center text-sm font-semibold text-slate-700 dark:text-slate-200">
+        {year}
+      </div>
+      <div className="grid grid-cols-4 gap-1">
+        {months.map((month) => (
+          <button
+            key={month.index}
+            type="button"
+            disabled={month.disabled}
+            onClick={() => onSelect(month.index)}
+            className={`rounded px-2 py-1.5 text-xs font-medium transition-colors ${
+              selectedMonth === month.index
+                ? 'bg-blue-500 text-white'
+                : month.disabled
+                  ? 'cursor-not-allowed text-slate-300 dark:text-slate-600'
+                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
+            }`}
+          >
+            {month.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function DateSelector({
+  startDate,
+  endDate: endDateProp,
+  value,
+  onChange,
+  orientation = 'horizontal',
+  locale = 'en-US',
+  className = '',
+}: DateSelectorProps) {
+  const endDate = useMemo(() => endDateProp || new Date(), [endDateProp])
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [hoverYear, setHoverYear] = useState<number | null>(null)
+  const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 })
+
+  const years = useMemo(() => {
+    const startYear = startDate.getFullYear()
+    const endYear = endDate.getFullYear()
+    const result: number[] = []
+    for (let year = startYear; year <= endYear; year++) {
+      result.push(year)
+    }
+    return result
+  }, [startDate, endDate])
+
+  const selectedYear = value?.getFullYear() ?? null
+  const selectedMonth = value?.getMonth() ?? null
+
+  const handleBarMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect()
+      let ratio: number
+
+      if (orientation === 'horizontal') {
+        ratio = (e.clientX - rect.left) / rect.width
+      } else {
+        ratio = (e.clientY - rect.top) / rect.height
+      }
+
+      ratio = Math.max(0, Math.min(1, ratio))
+      const yearIndex = Math.floor(ratio * years.length)
+      const clampedIndex = Math.min(yearIndex, years.length - 1)
+      const year = years[clampedIndex]
+
+      if (year !== hoverYear) {
+        setHoverYear(year)
+      }
+
+      if (orientation === 'horizontal') {
+        const yearWidth = rect.width / years.length
+        const yearCenterX = (clampedIndex + 0.5) * yearWidth
+        setHoverPosition({ x: yearCenterX, y: 0 })
+      } else {
+        const yearHeight = rect.height / years.length
+        const yearCenterY = (clampedIndex + 0.5) * yearHeight
+        setHoverPosition({ x: 0, y: yearCenterY })
+      }
+    },
+    [orientation, years, hoverYear]
+  )
+
+  const handleBarMouseLeave = useCallback(() => {
+    setHoverYear(null)
+  }, [])
+
+  const handleMonthSelect = useCallback(
+    (month: number) => {
+      if (hoverYear !== null) {
+        const selectedDate = new Date(hoverYear, month, 1)
+        onChange?.(selectedDate)
+      }
+    },
+    [hoverYear, onChange]
+  )
+
+  // Close month selector when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setHoverYear(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const isHorizontal = orientation === 'horizontal'
+
+  const containerClasses = isHorizontal
+    ? 'relative flex h-16 w-full min-w-64 flex-col'
+    : 'relative flex h-full min-h-64 w-16 flex-row'
+
+  const barContainerClasses = isHorizontal
+    ? 'relative flex h-8 w-full cursor-pointer items-center'
+    : 'relative flex h-full w-8 cursor-pointer flex-col items-center'
+
+  const barClasses = isHorizontal
+    ? 'h-2 w-full rounded-full bg-slate-200 dark:bg-slate-600'
+    : 'h-full w-2 rounded-full bg-slate-200 dark:bg-slate-600'
+
+  const labelsContainerClasses = isHorizontal
+    ? 'relative mt-1 flex h-6 w-full justify-between'
+    : 'relative ml-1 flex h-full w-6 flex-col justify-between'
+
+  return (
+    <div
+      ref={containerRef}
+      className={`select-none font-sans ${containerClasses} ${className}`}
       role="application"
       aria-label="Date selector"
     >
-      {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex gap-1">
-          <button
-            type="button"
-            className={navButtonClasses}
-            onClick={goToPreviousYear}
-            disabled={disabled}
-            aria-label="Previous year"
-          >
-            ««
-          </button>
-          <button
-            type="button"
-            className={navButtonClasses}
-            onClick={goToPreviousMonth}
-            disabled={disabled}
-            aria-label="Previous month"
-          >
-            «
-          </button>
-        </div>
+      {/* Bar container */}
+      <div
+        className={barContainerClasses}
+        onMouseMove={handleBarMouseMove}
+        onMouseLeave={handleBarMouseLeave}
+      >
+        {/* Background bar */}
+        <div className={barClasses}>
+          {/* Year tick marks */}
+          {years.map((year, index) => {
+            const position = ((index + 0.5) / years.length) * 100
+            const isSelected = year === selectedYear
+            const isHovered = year === hoverYear
 
-        <div className="flex gap-2 font-semibold">
-          <span className="text-slate-800 dark:text-slate-100">{monthName}</span>
-          <span className="text-slate-500 dark:text-slate-400">{viewYear}</span>
-        </div>
-
-        <div className="flex gap-1">
-          <button
-            type="button"
-            className={navButtonClasses}
-            onClick={goToNextMonth}
-            disabled={disabled}
-            aria-label="Next month"
-          >
-            »
-          </button>
-          <button
-            type="button"
-            className={navButtonClasses}
-            onClick={goToNextYear}
-            disabled={disabled}
-            aria-label="Next year"
-          >
-            »»
-          </button>
-        </div>
-      </div>
-
-      {/* Calendar */}
-      <div role="grid">
-        {/* Weekday headers */}
-        <div className="mb-2 grid grid-cols-7" role="row">
-          {weekDays.map((day, index) => (
-            <div
-              key={index}
-              className="py-2 text-center text-xs font-semibold uppercase text-slate-500 dark:text-slate-400"
-              role="columnheader"
-            >
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* Days grid */}
-        <div className="grid grid-cols-7 gap-0.5">
-          {calendarDays.map((date, index) => {
-            if (!date) {
-              return (
-                <div
-                  key={`empty-${index}`}
-                  className={`${dayBaseClasses}`}
-                  role="gridcell"
-                />
-              )
-            }
-
-            const isSelected = isSameDay(value, date)
-            const isToday = isSameDay(today, date)
-            const isDisabledDate = isDateDisabled(date, minDate, maxDate)
-
-            let dayClasses = dayBaseClasses
-            if (isSelected) {
-              dayClasses += ' bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500'
-            } else if (isToday) {
-              dayClasses += ' border-2 border-amber-500 bg-amber-50 text-slate-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-slate-100 dark:hover:bg-amber-900/50'
-            } else if (isDisabledDate) {
-              dayClasses += ' cursor-not-allowed text-slate-300 dark:text-slate-600'
-            } else {
-              dayClasses += ' text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700'
-            }
+            const tickStyle: React.CSSProperties = isHorizontal
+              ? { left: `${position}%`, transform: 'translateX(-50%)' }
+              : { top: `${position}%`, transform: 'translateY(-50%)' }
 
             return (
-              <button
-                key={date.toISOString()}
-                type="button"
-                className={dayClasses}
-                onClick={() => handleDateSelect(date)}
-                onKeyDown={(e) => handleKeyDown(e, date)}
-                disabled={disabled || isDisabledDate}
-                role="gridcell"
-                aria-selected={isSelected}
-                aria-label={date.toLocaleDateString(locale, {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-                tabIndex={isSelected ? 0 : -1}
-              >
-                {date.getDate()}
-              </button>
+              <div
+                key={year}
+                className={`absolute ${isHorizontal ? 'h-4 w-1' : 'h-1 w-4'} rounded-full transition-all ${
+                  isSelected
+                    ? 'bg-blue-500 dark:bg-blue-400'
+                    : isHovered
+                      ? 'bg-slate-500 dark:bg-slate-400'
+                      : 'bg-slate-400 dark:bg-slate-500'
+                } ${isHorizontal ? '-top-1' : '-left-1'}`}
+                style={tickStyle}
+              />
             )
           })}
         </div>
+
+        {/* Month selector popup */}
+        {hoverYear !== null && (
+          <MonthSelector
+            year={hoverYear}
+            position={hoverPosition}
+            orientation={orientation}
+            locale={locale}
+            selectedMonth={selectedYear === hoverYear ? selectedMonth : null}
+            onSelect={handleMonthSelect}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        )}
       </div>
 
-      {/* Footer */}
+      {/* Year labels */}
+      <div className={labelsContainerClasses}>
+        {years.length <= 10 ? (
+          // Show all years if 10 or fewer
+          years.map((year, index) => {
+            const position = ((index + 0.5) / years.length) * 100
+            const style: React.CSSProperties = isHorizontal
+              ? { left: `${position}%`, transform: 'translateX(-50%)' }
+              : { top: `${position}%`, transform: 'translateY(-50%)' }
+
+            return (
+              <span
+                key={year}
+                className="absolute text-xs text-slate-500 dark:text-slate-400"
+                style={style}
+              >
+                {year}
+              </span>
+            )
+          })
+        ) : (
+          // Show only first and last year if more than 10
+          <>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {years[0]}
+            </span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {years[years.length - 1]}
+            </span>
+          </>
+        )}
+      </div>
+
+      {/* Selected date indicator */}
       {value && (
-        <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4 dark:border-slate-600">
-          <span className="text-sm text-slate-700 dark:text-slate-200">
-            Selected: {value.toLocaleDateString(locale, {
-              weekday: 'short',
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-            })}
-          </span>
-          <button
-            type="button"
-            className="rounded border border-slate-200 bg-transparent px-3 py-1.5 text-sm text-slate-500 transition-colors hover:border-blue-500 hover:bg-slate-100 hover:text-slate-700 dark:border-slate-600 dark:text-slate-400 dark:hover:border-blue-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-            onClick={() => onChange?.(null)}
-            disabled={disabled}
-          >
-            Clear
-          </button>
+        <div
+          className={`mt-2 text-sm text-slate-600 dark:text-slate-300 ${isHorizontal ? 'text-center' : ''}`}
+        >
+          {new Intl.DateTimeFormat(locale, {
+            month: 'long',
+            year: 'numeric',
+          }).format(value)}
         </div>
       )}
     </div>
