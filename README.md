@@ -80,19 +80,19 @@ The component uses CSS custom properties for theming. Override these to customiz
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm dev
 
 # Build the library
-npm run build:lib
+pnpm build:lib
 
 # Build the preview site
-npm run build:preview
+pnpm build:preview
 
 # Type check
-npm run typecheck
+pnpm typecheck
 ```
 
 ## License
