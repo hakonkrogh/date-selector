@@ -4,37 +4,47 @@ import { DateSelector } from './components'
 function App() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [locale, setLocale] = useState('en-US')
-  const [firstDayOfWeek, setFirstDayOfWeek] = useState<0 | 1>(0)
-  const [disabled, setDisabled] = useState(false)
-  const [useMinMax, setUseMinMax] = useState(false)
+  const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>(
+    'horizontal'
+  )
 
-  const today = new Date()
-  const minDate = useMinMax ? new Date(today.getFullYear(), today.getMonth(), 1) : undefined
-  const maxDate = useMinMax
-    ? new Date(today.getFullYear(), today.getMonth() + 2, 0)
-    : undefined
+  // Start date is 15 years ago
+  const startDate = new Date(new Date().getFullYear() - 15, 0, 1)
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-indigo-500 to-purple-600 p-6 dark:from-slate-800 dark:to-slate-900">
       {/* Header */}
       <header className="mb-8 text-center text-white">
         <h1 className="mb-2 text-4xl font-bold">DateSelector</h1>
-        <p className="text-lg opacity-90">A flexible and accessible React date selector component</p>
+        <p className="text-lg opacity-90">
+          A timeline-based date selector for media galleries
+        </p>
       </header>
 
       {/* Main content */}
       <main className="mx-auto flex flex-1 flex-wrap items-start justify-center gap-8">
         {/* Demo */}
-        <section className="flex justify-center">
-          <DateSelector
-            value={selectedDate}
-            onChange={setSelectedDate}
-            locale={locale}
-            firstDayOfWeek={firstDayOfWeek}
-            disabled={disabled}
-            minDate={minDate}
-            maxDate={maxDate}
-          />
+        <section className="flex w-full max-w-2xl justify-center rounded-xl bg-white p-8 shadow-lg dark:bg-slate-800">
+          {orientation === 'horizontal' ? (
+            <DateSelector
+              startDate={startDate}
+              value={selectedDate}
+              onChange={setSelectedDate}
+              locale={locale}
+              orientation={orientation}
+              className="w-full"
+            />
+          ) : (
+            <div className="h-80">
+              <DateSelector
+                startDate={startDate}
+                value={selectedDate}
+                onChange={setSelectedDate}
+                locale={locale}
+                orientation={orientation}
+              />
+            </div>
+          )}
         </section>
 
         {/* Controls */}
@@ -68,60 +78,52 @@ function App() {
             </select>
           </div>
 
-          {/* First day of week select */}
+          {/* Orientation select */}
           <div className="mb-4">
             <label
-              htmlFor="firstDay"
+              htmlFor="orientation"
               className="mb-1.5 block text-sm font-medium text-slate-600 dark:text-slate-400"
             >
-              First day of week
+              Orientation
             </label>
             <select
-              id="firstDay"
-              value={firstDayOfWeek}
-              onChange={(e) => setFirstDayOfWeek(Number(e.target.value) as 0 | 1)}
+              id="orientation"
+              value={orientation}
+              onChange={(e) =>
+                setOrientation(e.target.value as 'horizontal' | 'vertical')
+              }
               className="w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
             >
-              <option value={0}>Sunday</option>
-              <option value={1}>Monday</option>
+              <option value="horizontal">Horizontal</option>
+              <option value="vertical">Vertical</option>
             </select>
-          </div>
-
-          {/* Disabled checkbox */}
-          <div className="mb-4">
-            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400">
-              <input
-                type="checkbox"
-                checked={disabled}
-                onChange={(e) => setDisabled(e.target.checked)}
-                className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-500 focus:ring-blue-500"
-              />
-              Disabled
-            </label>
-          </div>
-
-          {/* Min/Max checkbox */}
-          <div className="mb-4">
-            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400">
-              <input
-                type="checkbox"
-                checked={useMinMax}
-                onChange={(e) => setUseMinMax(e.target.checked)}
-                className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-500 focus:ring-blue-500"
-              />
-              Limit to current & next month
-            </label>
           </div>
 
           {/* Selected value display */}
           <div>
             <h3 className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-400">
-              Selected value
+              Selected month
             </h3>
             <code className="block break-all rounded-md bg-slate-100 px-3 py-2.5 text-sm text-slate-600 dark:bg-slate-700 dark:text-slate-400">
-              {selectedDate ? selectedDate.toISOString() : 'null'}
+              {selectedDate
+                ? new Intl.DateTimeFormat(locale, {
+                    month: 'long',
+                    year: 'numeric',
+                  }).format(selectedDate)
+                : 'null'}
             </code>
           </div>
+
+          {/* Clear button */}
+          {selectedDate && (
+            <button
+              type="button"
+              onClick={() => setSelectedDate(null)}
+              className="mt-4 w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+            >
+              Clear selection
+            </button>
+          )}
         </section>
       </main>
 
