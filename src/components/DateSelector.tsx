@@ -42,6 +42,8 @@ function MonthSelector({
   startDate,
   endDate,
 }: MonthSelectorProps) {
+  const [hoveredMonth, setHoveredMonth] = useState<number | null>(null)
+
   const months = useMemo(() => {
     const formatter = new Intl.DateTimeFormat(locale, { month: 'short' })
     return Array.from({ length: 12 }, (_, i) => {
@@ -56,7 +58,7 @@ function MonthSelector({
     })
   }, [year, locale, startDate, endDate])
 
-  const style: React.CSSProperties =
+  const containerStyle: React.CSSProperties =
     orientation === 'horizontal'
       ? {
           position: 'absolute',
@@ -75,32 +77,58 @@ function MonthSelector({
 
   return (
     <div
-      style={style}
+      style={containerStyle}
       className="z-50 rounded-lg border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-600 dark:bg-slate-800"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
+      {/* Year label */}
       <div className="mb-2 text-center text-sm font-semibold text-slate-700 dark:text-slate-200">
         {year}
       </div>
-      <div className="grid grid-cols-4 gap-1">
-        {months.map((month) => (
-          <button
-            key={month.index}
-            type="button"
-            disabled={month.disabled}
-            onClick={() => onSelect(month.index)}
-            className={`rounded px-2 py-1.5 text-xs font-medium transition-colors ${
-              selectedMonth === month.index
-                ? 'bg-blue-500 text-white'
-                : month.disabled
-                  ? 'cursor-not-allowed text-slate-300 dark:text-slate-600'
-                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
-            }`}
-          >
-            {month.name}
-          </button>
-        ))}
+
+      {/* Month bar */}
+      <div className="relative flex h-8 w-48 cursor-pointer items-center">
+        {/* Background bar */}
+        <div className="relative h-2 w-full rounded-full bg-slate-200 dark:bg-slate-600">
+          {/* Month tick marks */}
+          {months.map((month) => {
+            const pos = (month.index / 12) * 100
+            const isSelected = selectedMonth === month.index
+            const isHovered = hoveredMonth === month.index
+
+            return (
+              <button
+                key={month.index}
+                type="button"
+                disabled={month.disabled}
+                onClick={() => onSelect(month.index)}
+                onMouseEnter={() => setHoveredMonth(month.index)}
+                onMouseLeave={() => setHoveredMonth(null)}
+                className={`absolute -translate-x-1/2 -translate-y-1/2 top-1/2 h-3 w-3 rounded-full transition-all ${
+                  month.disabled
+                    ? 'cursor-not-allowed bg-slate-300 dark:bg-slate-700'
+                    : isSelected
+                      ? 'bg-blue-500 dark:bg-blue-400 scale-125'
+                      : isHovered
+                        ? 'bg-slate-500 dark:bg-slate-400 scale-110'
+                        : 'bg-slate-400 dark:bg-slate-500 hover:scale-110'
+                }`}
+                style={{ left: `${pos}%` }}
+                aria-label={month.name}
+              />
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Month label */}
+      <div className="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">
+        {hoveredMonth !== null
+          ? months[hoveredMonth].name
+          : selectedMonth !== null
+            ? months[selectedMonth].name
+            : '\u00A0'}
       </div>
     </div>
   )
