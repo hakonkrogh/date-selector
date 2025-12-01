@@ -235,13 +235,13 @@ export function DateSelector({
             return (
               <div
                 key={year}
-                className={`absolute ${isHorizontal ? 'h-4 w-1 -translate-x-1/2' : 'h-1 w-4 -translate-y-1/2'} rounded-full transition-all ${
+                className={`absolute ${isHorizontal ? 'h-2 w-1 -translate-x-1/2' : 'h-1 w-2 -translate-y-1/2'} rounded-full transition-all ${
                   isSelected
                     ? 'bg-blue-500 dark:bg-blue-400'
                     : isHovered
                       ? 'bg-slate-500 dark:bg-slate-400'
                       : 'bg-slate-400 dark:bg-slate-500'
-                } ${isHorizontal ? '-top-1' : '-left-1'}`}
+                }`}
                 style={tickStyle}
               />
             )
