@@ -301,12 +301,12 @@ export function DateSelector({
   const isHorizontal = orientation === 'horizontal'
 
   const containerClasses = isHorizontal
-    ? 'relative flex h-16 w-full min-w-64 flex-col'
-    : 'relative flex h-full min-h-64 w-16 flex-row'
+    ? 'relative flex w-full min-w-64 flex-col'
+    : 'relative flex h-full min-h-64 flex-row'
 
   const barContainerClasses = isHorizontal
-    ? 'relative flex h-8 w-full cursor-pointer items-center'
-    : 'relative flex h-full w-8 cursor-pointer flex-col items-center'
+    ? 'relative flex h-16 w-full cursor-pointer items-center'
+    : 'relative flex h-full w-16 cursor-pointer flex-col items-center'
 
   const barClasses = isHorizontal
     ? 'relative h-2 w-full rounded-full bg-slate-200 dark:bg-slate-600'
