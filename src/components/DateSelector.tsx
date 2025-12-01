@@ -75,6 +75,8 @@ function MonthSelector({
           marginLeft: 8,
         }
 
+  const isHorizontal = orientation === 'horizontal'
+
   return (
     <div
       style={containerStyle}
@@ -83,19 +85,33 @@ function MonthSelector({
       onMouseLeave={onMouseLeave}
     >
       {/* Year label */}
-      <div className="mb-2 text-center text-sm font-semibold text-slate-700 dark:text-slate-200">
+      <div
+        className={`text-center text-sm font-semibold text-slate-700 dark:text-slate-200 ${isHorizontal ? 'mb-2' : 'mb-2'}`}
+      >
         {year}
       </div>
 
       {/* Month bar */}
-      <div className="relative flex h-8 w-48 cursor-pointer items-center">
+      <div
+        className={`relative flex cursor-pointer items-center ${
+          isHorizontal ? 'h-8 w-48' : 'h-48 w-8 flex-col'
+        }`}
+      >
         {/* Background bar */}
-        <div className="relative h-2 w-full rounded-full bg-slate-200 dark:bg-slate-600">
+        <div
+          className={`relative rounded-full bg-slate-200 dark:bg-slate-600 ${
+            isHorizontal ? 'h-2 w-full' : 'h-full w-2'
+          }`}
+        >
           {/* Month tick marks */}
           {months.map((month) => {
             const pos = (month.index / 12) * 100
             const isSelected = selectedMonth === month.index
             const isHovered = hoveredMonth === month.index
+
+            const tickStyle: React.CSSProperties = isHorizontal
+              ? { left: `${pos}%` }
+              : { top: `${pos}%` }
 
             return (
               <button
@@ -105,7 +121,11 @@ function MonthSelector({
                 onClick={() => onSelect(month.index)}
                 onMouseEnter={() => setHoveredMonth(month.index)}
                 onMouseLeave={() => setHoveredMonth(null)}
-                className={`absolute -translate-x-1/2 -translate-y-1/2 top-1/2 h-3 w-3 rounded-full transition-all ${
+                className={`absolute h-3 w-3 rounded-full transition-all ${
+                  isHorizontal
+                    ? '-translate-x-1/2 -translate-y-1/2 top-1/2'
+                    : '-translate-x-1/2 -translate-y-1/2 left-1/2'
+                } ${
                   month.disabled
                     ? 'cursor-not-allowed bg-slate-300 dark:bg-slate-700'
                     : isSelected
@@ -114,7 +134,7 @@ function MonthSelector({
                         ? 'bg-slate-500 dark:bg-slate-400 scale-110'
                         : 'bg-slate-400 dark:bg-slate-500 hover:scale-110'
                 }`}
-                style={{ left: `${pos}%` }}
+                style={tickStyle}
                 aria-label={month.name}
               />
             )
@@ -123,7 +143,9 @@ function MonthSelector({
       </div>
 
       {/* Month label */}
-      <div className="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">
+      <div
+        className={`text-center text-xs text-slate-500 dark:text-slate-400 ${isHorizontal ? 'mt-2' : 'mt-2'}`}
+      >
         {hoveredMonth !== null
           ? months[hoveredMonth].name
           : selectedMonth !== null
