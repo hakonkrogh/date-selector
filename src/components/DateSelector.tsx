@@ -310,5 +310,3 @@ export function DateSelector({
     </div>
   )
 }
-
-export default DateSelector
