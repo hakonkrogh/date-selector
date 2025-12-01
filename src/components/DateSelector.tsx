@@ -11,6 +11,8 @@ export interface DateSelectorProps {
   onChange?: (date: Date | null) => void
   /** Orientation of the timeline bar */
   orientation?: 'horizontal' | 'vertical'
+  /** Reverse the order (newest first) */
+  reversed?: boolean
   /** Locale for formatting (default: 'en-US') */
   locale?: string
   /** Custom class name */
@@ -21,6 +23,7 @@ interface MonthSelectorProps {
   year: number
   position: { x: number; y: number }
   orientation: 'horizontal' | 'vertical'
+  reversed: boolean
   locale: string
   selectedMonth: number | null
   hoveredFromBar: number | null
@@ -35,6 +38,7 @@ function MonthSelector({
   year,
   position,
   orientation,
+  reversed,
   locale,
   selectedMonth,
   hoveredFromBar,
@@ -110,7 +114,8 @@ function MonthSelector({
         >
           {/* Month tick marks */}
           {months.map((month) => {
-            const pos = (month.index / 12) * 100
+            const basePos = (month.index / 12) * 100
+            const pos = reversed ? 100 - basePos - (100 / 12) : basePos
             const isSelected = selectedMonth === month.index
             const isHovered = displayedHoverMonth === month.index
 
@@ -167,6 +172,7 @@ export function DateSelector({
   value,
   onChange,
   orientation = 'vertical',
+  reversed = false,
   locale = 'en-US',
   className = '',
 }: DateSelectorProps) {
@@ -185,8 +191,8 @@ export function DateSelector({
     for (let year = startYear; year <= endYear; year++) {
       result.push(year)
     }
-    return result
-  }, [startDate, endDate])
+    return reversed ? result.reverse() : result
+  }, [startDate, endDate, reversed])
 
   const selectedYear = value?.getFullYear() ?? null
   const selectedMonth = value?.getMonth() ?? null
@@ -222,7 +228,8 @@ export function DateSelector({
       const yearSegmentSize = 1 / years.length
       const yearStartRatio = clampedIndex * yearSegmentSize
       const positionWithinYear = (ratio - yearStartRatio) / yearSegmentSize
-      const monthIndex = Math.min(Math.floor(positionWithinYear * 12), 11)
+      const baseMonthIndex = Math.min(Math.floor(positionWithinYear * 12), 11)
+      const monthIndex = reversed ? 11 - baseMonthIndex : baseMonthIndex
       setHoverMonth(monthIndex)
 
       if (year !== hoverYear) {
@@ -363,6 +370,7 @@ export function DateSelector({
             year={hoverYear}
             position={hoverPosition}
             orientation={orientation}
+            reversed={reversed}
             locale={locale}
             selectedMonth={selectedYear === hoverYear ? selectedMonth : null}
             hoveredFromBar={isPopupHovered ? null : hoverMonth}
