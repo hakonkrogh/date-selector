@@ -105,7 +105,7 @@ export function DateSelector({
   endDate: endDateProp,
   value,
   onChange,
-  orientation = 'horizontal',
+  orientation = 'vertical',
   locale = 'en-US',
   className = '',
 }: DateSelectorProps) {
@@ -149,12 +149,12 @@ export function DateSelector({
 
       if (orientation === 'horizontal') {
         const yearWidth = rect.width / years.length
-        const yearCenterX = (clampedIndex + 0.5) * yearWidth
-        setHoverPosition({ x: yearCenterX, y: 0 })
+        const yearStartX = clampedIndex * yearWidth
+        setHoverPosition({ x: yearStartX, y: 0 })
       } else {
         const yearHeight = rect.height / years.length
-        const yearCenterY = (clampedIndex + 0.5) * yearHeight
-        setHoverPosition({ x: 0, y: yearCenterY })
+        const yearStartY = clampedIndex * yearHeight
+        setHoverPosition({ x: 0, y: yearStartY })
       }
     },
     [orientation, years, hoverYear]
@@ -200,8 +200,8 @@ export function DateSelector({
     : 'relative flex h-full w-8 cursor-pointer flex-col items-center'
 
   const barClasses = isHorizontal
-    ? 'h-2 w-full rounded-full bg-slate-200 dark:bg-slate-600'
-    : 'h-full w-2 rounded-full bg-slate-200 dark:bg-slate-600'
+    ? 'relative h-2 w-full rounded-full bg-slate-200 dark:bg-slate-600'
+    : 'relative h-full w-2 rounded-full bg-slate-200 dark:bg-slate-600'
 
   const labelsContainerClasses = isHorizontal
     ? 'relative mt-1 flex h-6 w-full justify-between'
@@ -224,24 +224,24 @@ export function DateSelector({
         <div className={barClasses}>
           {/* Year tick marks */}
           {years.map((year, index) => {
-            const position = ((index + 0.5) / years.length) * 100
+            const position = (index / years.length) * 100
             const isSelected = year === selectedYear
             const isHovered = year === hoverYear
 
             const tickStyle: React.CSSProperties = isHorizontal
-              ? { left: `${position}%`, transform: 'translateX(-50%)' }
-              : { top: `${position}%`, transform: 'translateY(-50%)' }
+              ? { left: `${position}%` }
+              : { top: `${position}%` }
 
             return (
               <div
                 key={year}
-                className={`absolute ${isHorizontal ? 'h-4 w-1' : 'h-1 w-4'} rounded-full transition-all ${
+                className={`absolute ${isHorizontal ? '-translate-x-1/2' : '-translate-y-1/2'} h-2 w-2 rounded-full transition-all ${
                   isSelected
                     ? 'bg-blue-500 dark:bg-blue-400'
                     : isHovered
                       ? 'bg-slate-500 dark:bg-slate-400'
                       : 'bg-slate-400 dark:bg-slate-500'
-                } ${isHorizontal ? '-top-1' : '-left-1'}`}
+                }`}
                 style={tickStyle}
               />
             )
@@ -268,7 +268,7 @@ export function DateSelector({
         {years.length <= 10 ? (
           // Show all years if 10 or fewer
           years.map((year, index) => {
-            const position = ((index + 0.5) / years.length) * 100
+            const position = (index / years.length) * 100
             const style: React.CSSProperties = isHorizontal
               ? { left: `${position}%`, transform: 'translateX(-50%)' }
               : { top: `${position}%`, transform: 'translateY(-50%)' }
@@ -310,5 +310,3 @@ export function DateSelector({
     </div>
   )
 }
-
-export default DateSelector

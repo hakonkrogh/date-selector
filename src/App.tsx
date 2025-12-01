@@ -5,14 +5,14 @@ function App() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [locale, setLocale] = useState('en-US')
   const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>(
-    'horizontal'
+    'vertical'
   )
 
   // Start date is 15 years ago
   const startDate = new Date(new Date().getFullYear() - 15, 0, 1)
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-indigo-500 to-purple-600 p-6 dark:from-slate-800 dark:to-slate-900">
+    <div className="flex h-dvh flex-col bg-gradient-to-br from-indigo-500 to-purple-600 p-6 dark:from-slate-800 dark:to-slate-900">
       {/* Header */}
       <header className="mb-8 text-center text-white">
         <h1 className="mb-2 text-4xl font-bold">DateSelector</h1>
@@ -22,9 +22,13 @@ function App() {
       </header>
 
       {/* Main content */}
-      <main className="mx-auto flex flex-1 flex-wrap items-start justify-center gap-8">
+      <main className="mx-auto flex flex-1 flex-wrap items-stretch justify-center gap-8">
         {/* Demo */}
-        <section className="flex w-full max-w-2xl justify-center rounded-xl bg-white p-8 shadow-lg dark:bg-slate-800">
+        <section
+          className={`flex justify-center rounded-xl bg-white p-8 shadow-lg dark:bg-slate-800 ${
+            orientation === 'horizontal' ? 'w-full max-w-2xl' : 'h-full'
+          }`}
+        >
           {orientation === 'horizontal' ? (
             <DateSelector
               startDate={startDate}
@@ -35,7 +39,7 @@ function App() {
               className="w-full"
             />
           ) : (
-            <div className="h-80">
+            <div className="h-full py-4">
               <DateSelector
                 startDate={startDate}
                 value={selectedDate}
@@ -48,7 +52,7 @@ function App() {
         </section>
 
         {/* Controls */}
-        <section className="w-72 rounded-xl bg-white p-6 shadow-lg dark:bg-slate-800">
+        <section className="w-72 self-start rounded-xl bg-white p-6 shadow-lg dark:bg-slate-800">
           <h2 className="mb-5 text-xl font-semibold text-slate-800 dark:text-slate-100">
             Options
           </h2>
