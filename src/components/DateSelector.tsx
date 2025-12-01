@@ -147,14 +147,13 @@ export function DateSelector({
         setHoverYear(year)
       }
 
+      // Follow the cursor position along the bar's axis
       if (orientation === 'horizontal') {
-        const yearWidth = rect.width / years.length
-        const yearStartX = clampedIndex * yearWidth
-        setHoverPosition({ x: yearStartX, y: 0 })
+        const cursorX = e.clientX - rect.left
+        setHoverPosition({ x: cursorX, y: 0 })
       } else {
-        const yearHeight = rect.height / years.length
-        const yearStartY = clampedIndex * yearHeight
-        setHoverPosition({ x: 0, y: yearStartY })
+        const cursorY = e.clientY - rect.top
+        setHoverPosition({ x: 0, y: cursorY })
       }
     },
     [orientation, years, hoverYear]
