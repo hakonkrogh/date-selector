@@ -12,7 +12,7 @@ function App() {
   const startDate = new Date(new Date().getFullYear() - 15, 0, 1)
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-indigo-500 to-purple-600 p-6 dark:from-slate-800 dark:to-slate-900">
+    <div className="flex h-dvh flex-col bg-gradient-to-br from-indigo-500 to-purple-600 p-6 dark:from-slate-800 dark:to-slate-900">
       {/* Header */}
       <header className="mb-8 text-center text-white">
         <h1 className="mb-2 text-4xl font-bold">DateSelector</h1>
