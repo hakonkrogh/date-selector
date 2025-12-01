@@ -117,6 +117,7 @@ export function DateSelector({
 }: DateSelectorProps) {
   const endDate = useMemo(() => endDateProp || new Date(), [endDateProp])
   const containerRef = useRef<HTMLDivElement>(null)
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [hoverYear, setHoverYear] = useState<number | null>(null)
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 })
   const [isPopupHovered, setIsPopupHovered] = useState(false)
@@ -136,6 +137,12 @@ export function DateSelector({
 
   const handleBarMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
+      // Cancel any pending close timeout when moving on bar
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current)
+        closeTimeoutRef.current = null
+      }
+
       // Don't update position while interacting with the popup
       if (isPopupHovered) {
         return
@@ -172,13 +179,20 @@ export function DateSelector({
   )
 
   const handleBarMouseLeave = useCallback(() => {
-    // Only close if not hovering over the popup
-    if (!isPopupHovered) {
-      setHoverYear(null)
-    }
+    // Delay closing to give time to move to the popup
+    closeTimeoutRef.current = setTimeout(() => {
+      if (!isPopupHovered) {
+        setHoverYear(null)
+      }
+    }, 150)
   }, [isPopupHovered])
 
   const handlePopupMouseEnter = useCallback(() => {
+    // Cancel any pending close timeout
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
     setIsPopupHovered(true)
   }, [])
 
@@ -210,6 +224,15 @@ export function DateSelector({
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current)
+      }
+    }
   }, [])
 
   const isHorizontal = orientation === 'horizontal'
