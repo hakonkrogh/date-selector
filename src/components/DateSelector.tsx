@@ -200,8 +200,8 @@ export function DateSelector({
     : 'relative flex h-full w-8 cursor-pointer flex-col items-center'
 
   const barClasses = isHorizontal
-    ? 'h-2 w-full rounded-full bg-slate-200 dark:bg-slate-600'
-    : 'h-full w-2 rounded-full bg-slate-200 dark:bg-slate-600'
+    ? 'relative h-2 w-full rounded-full bg-slate-200 dark:bg-slate-600'
+    : 'relative h-full w-2 rounded-full bg-slate-200 dark:bg-slate-600'
 
   const labelsContainerClasses = isHorizontal
     ? 'relative mt-1 flex h-6 w-full justify-between'
