@@ -23,6 +23,7 @@ interface MonthSelectorProps {
   orientation: 'horizontal' | 'vertical'
   locale: string
   selectedMonth: number | null
+  hoveredFromBar: number | null
   onSelect: (month: number) => void
   onMouseEnter: () => void
   onMouseLeave: () => void
@@ -36,6 +37,7 @@ function MonthSelector({
   orientation,
   locale,
   selectedMonth,
+  hoveredFromBar,
   onSelect,
   onMouseEnter,
   onMouseLeave,
@@ -43,6 +45,9 @@ function MonthSelector({
   endDate,
 }: MonthSelectorProps) {
   const [hoveredMonth, setHoveredMonth] = useState<number | null>(null)
+
+  // Use local hover state if hovering directly on popup, otherwise use bar hover
+  const displayedHoverMonth = hoveredMonth ?? hoveredFromBar
 
   const months = useMemo(() => {
     const formatter = new Intl.DateTimeFormat(locale, { month: 'short' })
@@ -107,7 +112,7 @@ function MonthSelector({
           {months.map((month) => {
             const pos = (month.index / 12) * 100
             const isSelected = selectedMonth === month.index
-            const isHovered = hoveredMonth === month.index
+            const isHovered = displayedHoverMonth === month.index
 
             const tickStyle: React.CSSProperties = isHorizontal
               ? { left: `${pos}%` }
@@ -146,8 +151,8 @@ function MonthSelector({
       <div
         className={`text-center text-xs text-slate-500 dark:text-slate-400 ${isHorizontal ? 'mt-2' : 'mt-2'}`}
       >
-        {hoveredMonth !== null
-          ? months[hoveredMonth].name
+        {displayedHoverMonth !== null
+          ? months[displayedHoverMonth].name
           : selectedMonth !== null
             ? months[selectedMonth].name
             : '\u00A0'}
@@ -169,6 +174,7 @@ export function DateSelector({
   const containerRef = useRef<HTMLDivElement>(null)
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [hoverYear, setHoverYear] = useState<number | null>(null)
+  const [hoverMonth, setHoverMonth] = useState<number | null>(null)
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 })
   const [isPopupHovered, setIsPopupHovered] = useState(false)
 
@@ -211,6 +217,13 @@ export function DateSelector({
       const yearIndex = Math.floor(ratio * years.length)
       const clampedIndex = Math.min(yearIndex, years.length - 1)
       const year = years[clampedIndex]
+
+      // Calculate which month within the year segment
+      const yearSegmentSize = 1 / years.length
+      const yearStartRatio = clampedIndex * yearSegmentSize
+      const positionWithinYear = (ratio - yearStartRatio) / yearSegmentSize
+      const monthIndex = Math.min(Math.floor(positionWithinYear * 12), 11)
+      setHoverMonth(monthIndex)
 
       if (year !== hoverYear) {
         setHoverYear(year)
@@ -352,6 +365,7 @@ export function DateSelector({
             orientation={orientation}
             locale={locale}
             selectedMonth={selectedYear === hoverYear ? selectedMonth : null}
+            hoveredFromBar={isPopupHovered ? null : hoverMonth}
             onSelect={handleMonthSelect}
             onMouseEnter={handlePopupMouseEnter}
             onMouseLeave={handlePopupMouseLeave}
