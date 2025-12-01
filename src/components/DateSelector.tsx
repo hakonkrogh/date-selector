@@ -24,6 +24,8 @@ interface MonthSelectorProps {
   locale: string
   selectedMonth: number | null
   onSelect: (month: number) => void
+  onMouseEnter: () => void
+  onMouseLeave: () => void
   startDate: Date
   endDate: Date
 }
@@ -35,6 +37,8 @@ function MonthSelector({
   locale,
   selectedMonth,
   onSelect,
+  onMouseEnter,
+  onMouseLeave,
   startDate,
   endDate,
 }: MonthSelectorProps) {
@@ -73,6 +77,8 @@ function MonthSelector({
     <div
       style={style}
       className="z-50 rounded-lg border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-600 dark:bg-slate-800"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       <div className="mb-2 text-center text-sm font-semibold text-slate-700 dark:text-slate-200">
         {year}
@@ -113,6 +119,7 @@ export function DateSelector({
   const containerRef = useRef<HTMLDivElement>(null)
   const [hoverYear, setHoverYear] = useState<number | null>(null)
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 })
+  const [isPopupHovered, setIsPopupHovered] = useState(false)
 
   const years = useMemo(() => {
     const startYear = startDate.getFullYear()
@@ -160,6 +167,18 @@ export function DateSelector({
   )
 
   const handleBarMouseLeave = useCallback(() => {
+    // Only close if not hovering over the popup
+    if (!isPopupHovered) {
+      setHoverYear(null)
+    }
+  }, [isPopupHovered])
+
+  const handlePopupMouseEnter = useCallback(() => {
+    setIsPopupHovered(true)
+  }, [])
+
+  const handlePopupMouseLeave = useCallback(() => {
+    setIsPopupHovered(false)
     setHoverYear(null)
   }, [])
 
@@ -256,6 +275,8 @@ export function DateSelector({
             locale={locale}
             selectedMonth={selectedYear === hoverYear ? selectedMonth : null}
             onSelect={handleMonthSelect}
+            onMouseEnter={handlePopupMouseEnter}
+            onMouseLeave={handlePopupMouseLeave}
             startDate={startDate}
             endDate={endDate}
           />
