@@ -235,7 +235,7 @@ export function DateSelector({
             return (
               <div
                 key={year}
-                className={`absolute ${isHorizontal ? 'h-2 w-1 -translate-x-1/2' : 'h-1 w-2 -translate-y-1/2'} rounded-full transition-all ${
+                className={`absolute ${isHorizontal ? '-translate-x-1/2' : '-translate-y-1/2'} h-2 w-2 rounded-full transition-all ${
                   isSelected
                     ? 'bg-blue-500 dark:bg-blue-400'
                     : isHovered
