@@ -136,6 +136,11 @@ export function DateSelector({
 
   const handleBarMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
+      // Don't update position while interacting with the popup
+      if (isPopupHovered) {
+        return
+      }
+
       const rect = e.currentTarget.getBoundingClientRect()
       let ratio: number
 
@@ -163,7 +168,7 @@ export function DateSelector({
         setHoverPosition({ x: 0, y: cursorY })
       }
     },
-    [orientation, years, hoverYear]
+    [orientation, years, hoverYear, isPopupHovered]
   )
 
   const handleBarMouseLeave = useCallback(() => {
